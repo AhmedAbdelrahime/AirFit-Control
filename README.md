@@ -17,10 +17,10 @@ AirFit is a Flutter application for controlling an air suspension system and var
 
 ## Screenshots
 
-![Splash Screen](screenshots/splash_screen.jpg)
-![User ID Screen](screenshots/user_id_screen.jpg)
-![Home Screen](screenshots/home_screen.jpg)
-![Car Control](screenshots/car_control.jpg)
+![Splash Screen](screenshots/splash_screen.jpg){: width="50%"}
+![User ID Screen](screenshots/user_id_screen.jpg){: width="50%"}
+![Home Screen](screenshots/home_screen.jpg){: width="50%"}
+![Car Control](screenshots/car_control.jpg){: width="50%"}
 
 
 ## Getting Started
