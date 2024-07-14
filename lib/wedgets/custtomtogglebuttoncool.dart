@@ -1,40 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/wedgets/messagehandler.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class CustomToggleButtonControl extends StatefulWidget {
   final VoidCallback onTapOn;
   final VoidCallback onTapOff;
+  final bool isConnected;
+
   final String onSvg;
   final String offSvg;
   final String ontext;
   final String offtext;
 
-  CustomToggleButtonControl({
+  const CustomToggleButtonControl({
+    super.key,
     required this.onTapOn,
     required this.onTapOff,
     required this.onSvg,
     required this.offSvg,
     required this.ontext,
     required this.offtext,
+    required this.isConnected,
   });
 
   @override
+  // ignore: library_private_types_in_public_api
   _CustomToggleButtonControlState createState() =>
       _CustomToggleButtonControlState();
 }
 
 class _CustomToggleButtonControlState extends State<CustomToggleButtonControl> {
   bool isOn = false;
+  late MessageHandler _messageHandler;
+  @override
+  void initState() {
+    super.initState();
+    _messageHandler = MessageHandler(context);
+  }
 
   void _toggleButton() {
-    setState(() {
-      isOn = !isOn;
-      if (isOn) {
-        widget.onTapOn();
-      } else {
-        widget.onTapOff();
-      }
-    });
+    if (widget.isConnected) {
+      setState(() {
+        isOn = !isOn;
+        if (isOn) {
+          widget.onTapOn();
+        } else {
+          widget.onTapOff();
+        }
+      });
+    } else {
+      _messageHandler.showMessage('Not connected to Bluetooth');
+    }
   }
 
   @override
@@ -44,7 +60,7 @@ class _CustomToggleButtonControlState extends State<CustomToggleButtonControl> {
       child: Column(
         children: [
           AnimatedContainer(
-            duration: Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
             width: 90,
             height: 90,
             padding: const EdgeInsets.all(12),
@@ -60,7 +76,7 @@ class _CustomToggleButtonControlState extends State<CustomToggleButtonControl> {
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
                   blurRadius: 8,
-                  offset: Offset(0, 4),
+                  offset: const Offset(0, 4),
                   spreadRadius: 0,
                 ),
               ],
@@ -75,7 +91,7 @@ class _CustomToggleButtonControlState extends State<CustomToggleButtonControl> {
           ),
           Text(
             isOn ? widget.ontext : widget.offtext,
-            style: TextStyle(
+            style: const TextStyle(
                 color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
           )
         ],

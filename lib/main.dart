@@ -1,14 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_application/auth/useridscreen.dart';
-import 'package:flutter_application/screens/carcontrol.dart';
-import 'package:flutter_application/screens/getstart.dart';
+
 import 'package:flutter_application/screens/homescreen/homescreen.dart';
 import 'package:flutter_application/screens/splashscareen.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 
 void main() async {

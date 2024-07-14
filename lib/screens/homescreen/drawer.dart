@@ -1,10 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_application/screens/carcontrol.dart';
 import 'package:flutter_application/screens/getstart.dart';
 import 'package:flutter_application/screens/privacypage.dart';
 import 'package:flutter_application/screens/termofser.dart';
+import 'package:flutter_application/wedgets/espcontroler.dart';
+import 'package:flutter_application/wedgets/messagehandler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -23,19 +23,8 @@ class _DrwerPageState extends State<DrwerPage> {
   bool _savehight = false;
   // bool _isConnecting = false;
   BluetoothConnection? _connection;
-
-  Future<void> _sendCommandToESP32(String command) async {
-    if (_connection != null && _connection!.isConnected) {
-      try {
-        _sendData(command);
-        _showMessage("Command sent: $command", Colors.green);
-      } catch (e) {
-        _showMessage("Failed to send command: $e", Colors.red);
-      }
-    } else {
-      _showMessage("Not connected to any device", Colors.red);
-    }
-  }
+  ESP32Controller? _esp32Controller;
+  MessageHandler? _messageHandler;
 
   Future<void> _logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -43,35 +32,18 @@ class _DrwerPageState extends State<DrwerPage> {
 
     await FirebaseAuth.instance.signOut();
     Navigator.pushAndRemoveUntil(
+      // ignore: use_build_context_synchronously
       context,
       MaterialPageRoute(builder: (context) => Welcomepage()),
       (route) => false,
     );
   }
 
-  void _sendData(String data) {
-    _connection?.output.add(ascii.encode(data));
-  }
-
-  void _showMessage(String message, [Color backgroundColor = Colors.red]) {
-    final snackBar = SnackBar(
-      content: Text(message),
-      backgroundColor: backgroundColor,
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: backgroundColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(20), // Adjust the border radius as needed
-        ),
-        margin: EdgeInsets.all(10), // Adjust the margin as needed
-        elevation: 6, // Adjust the elevation as needed
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _messageHandler = MessageHandler(context);
+    _esp32Controller = ESP32Controller(_connection, _messageHandler!);
   }
 
   void _showWarningDialog() {
@@ -80,10 +52,10 @@ class _DrwerPageState extends State<DrwerPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.black87,
-          shape: RoundedRectangleBorder(
+          shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(20.0)),
           ),
-          title: Row(
+          title: const Row(
             children: [
               Icon(Icons.warning, color: Colors.redAccent),
               SizedBox(width: 10),
@@ -96,7 +68,7 @@ class _DrwerPageState extends State<DrwerPage> {
               ),
             ],
           ),
-          content: Text(
+          content: const Text(
             'We advise you to activate the pressure sensor reading only when necessary to maintain a fast and smooth user experience.',
             style: TextStyle(
               color: Colors.white,
@@ -107,11 +79,11 @@ class _DrwerPageState extends State<DrwerPage> {
             TextButton(
               style: TextButton.styleFrom(
                 backgroundColor: Colors.redAccent,
-                shape: RoundedRectangleBorder(
+                shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(10.0)),
                 ),
               ),
-              child: Text(
+              child: const Text(
                 'OK',
                 style: TextStyle(
                   color: Colors.white,
@@ -134,10 +106,10 @@ class _DrwerPageState extends State<DrwerPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.black87,
-          shape: RoundedRectangleBorder(
+          shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(20.0)),
           ),
-          title: Row(
+          title: const Row(
             children: [
               Icon(Icons.logout, color: Colors.redAccent),
               SizedBox(width: 10),
@@ -150,7 +122,7 @@ class _DrwerPageState extends State<DrwerPage> {
               ),
             ],
           ),
-          content: Text(
+          content: const Text(
             'Are you sure you want to log out?',
             style: TextStyle(
               color: Colors.white,
@@ -161,11 +133,11 @@ class _DrwerPageState extends State<DrwerPage> {
             TextButton(
               style: TextButton.styleFrom(
                 backgroundColor: Colors.redAccent,
-                shape: RoundedRectangleBorder(
+                shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(10.0)),
                 ),
               ),
-              child: Text(
+              child: const Text(
                 'Cancel',
                 style: TextStyle(
                   color: Colors.white,
@@ -179,11 +151,11 @@ class _DrwerPageState extends State<DrwerPage> {
             TextButton(
               style: TextButton.styleFrom(
                 backgroundColor: Colors.blue,
-                shape: RoundedRectangleBorder(
+                shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(10.0)),
                 ),
               ),
-              child: Text(
+              child: const Text(
                 'Logout',
                 style: TextStyle(
                   color: Colors.white,
@@ -207,10 +179,10 @@ class _DrwerPageState extends State<DrwerPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.black87,
-          shape: RoundedRectangleBorder(
+          shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(20.0)),
           ),
-          content: Text(
+          content: const Text(
             'If you have any air leakage problem, activate this option. The control will automatically maintain the current height.',
             style: TextStyle(
               color: Colors.white,
@@ -221,11 +193,11 @@ class _DrwerPageState extends State<DrwerPage> {
             TextButton(
               style: TextButton.styleFrom(
                 backgroundColor: Colors.blue,
-                shape: RoundedRectangleBorder(
+                shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(10.0)),
                 ),
               ),
-              child: Text(
+              child: const Text(
                 'OK',
                 style: TextStyle(
                   color: Colors.white,
@@ -251,7 +223,7 @@ class _DrwerPageState extends State<DrwerPage> {
         elevation: 1.0, // Elevation for the drawer shadow
         semanticLabel: 'Main Menu', // Accessibility label
         shadowColor: Colors.blue.withOpacity(1), // Shadow color
-        shape: RoundedRectangleBorder(
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.horizontal(
             right: Radius.circular(40),
             left: Radius.circular(20),
@@ -266,27 +238,28 @@ class _DrwerPageState extends State<DrwerPage> {
         child: ListView(
           children: [
             ListTile(
-              leading: FaIcon(
+              leading: const FaIcon(
                 FontAwesomeIcons.car,
                 color: Color(0xFF8A8A8A),
               ),
-              title: Text(
+              title: const Text(
                 'Car Control',
                 style: TextStyle(color: Colors.white),
               ),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Carcontrol()),
+                  MaterialPageRoute(builder: (context) => const Carcontrol()),
                 );
               },
             ),
             ListTile(
-              leading: FaIcon(
+              leading: const FaIcon(
+                // ignore: deprecated_member_use
                 FontAwesomeIcons.fileAlt,
                 color: Color(0xFF8A8A8A),
               ),
-              title: Text(
+              title: const Text(
                 'Privacy Policy',
                 style: TextStyle(color: Colors.white),
               ),
@@ -301,11 +274,11 @@ class _DrwerPageState extends State<DrwerPage> {
               },
             ),
             ListTile(
-              leading: FaIcon(
+              leading: const FaIcon(
                 FontAwesomeIcons.fileContract,
                 color: Color(0xFF8A8A8A),
               ),
-              title: Text(
+              title: const Text(
                 'Terms of Service',
                 style: TextStyle(color: Colors.white),
               ),
@@ -320,7 +293,7 @@ class _DrwerPageState extends State<DrwerPage> {
               },
             ),
             SwitchListTile(
-              title: Text(
+              title: const Text(
                 'Pressure\nReads',
                 style: TextStyle(color: Colors.white, fontSize: 12),
               ),
@@ -328,7 +301,7 @@ class _DrwerPageState extends State<DrwerPage> {
               inactiveThumbColor: Colors.grey,
               inactiveTrackColor: Colors.grey.withOpacity(0.4),
 
-              secondary: FaIcon(
+              secondary: const FaIcon(
                 FontAwesomeIcons.droplet,
                 color: Color(0xFF8A8A8A),
               ),
@@ -338,15 +311,15 @@ class _DrwerPageState extends State<DrwerPage> {
                   _pressureReads = value;
                 });
                 if (value) {
-                  _sendCommandToESP32('HO');
+                  _esp32Controller?.sendCommand('HO');
                   _showWarningDialog();
                 } else {
-                  _sendCommandToESP32('HF');
+                  _esp32Controller?.sendCommand('HF');
                 }
               },
             ),
             SwitchListTile(
-              title: Text(
+              title: const Text(
                 'Save\nHeight',
                 style: TextStyle(color: Colors.white, fontSize: 12),
               ),
@@ -354,7 +327,8 @@ class _DrwerPageState extends State<DrwerPage> {
               inactiveThumbColor: Colors.grey,
               inactiveTrackColor: Colors.grey.withOpacity(0.4),
 
-              secondary: FaIcon(
+              secondary: const FaIcon(
+                // ignore: deprecated_member_use
                 FontAwesomeIcons.save,
                 color: Color(0xFF8A8A8A),
               ),
@@ -364,19 +338,19 @@ class _DrwerPageState extends State<DrwerPage> {
                   _savehight = value;
                 });
                 if (value) {
-                  _sendCommandToESP32('PO');
+                  _esp32Controller?.sendCommand('PO');
                   _showAirSaveDialog();
                 } else {
-                  _sendCommandToESP32('PF');
+                  _esp32Controller?.sendCommand('PF');
                 }
               },
             ),
             ListTile(
-              leading: Icon(
+              leading: const Icon(
                 Icons.logout,
                 color: Color(0xFF8A8A8A),
               ),
-              title: Text(
+              title: const Text(
                 'Logout',
                 style: TextStyle(color: Colors.white),
               ),

@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/wedgets/messagehandler.dart';
 
 class CustomSwitchButton extends StatefulWidget {
   final VoidCallback onTapLocked;
   final VoidCallback onTapOpened;
+  final bool isConnected;
 
-  CustomSwitchButton({required this.onTapLocked, required this.onTapOpened});
+  const CustomSwitchButton({
+    super.key,
+    required this.onTapLocked,
+    required this.onTapOpened,
+    required this.isConnected,
+  });
 
   @override
+  // ignore: library_private_types_in_public_api
   _CustomSwitchButtonState createState() => _CustomSwitchButtonState();
 }
 
 class _CustomSwitchButtonState extends State<CustomSwitchButton> {
   bool isOn = false;
+  late MessageHandler _messageHandler;
 
-  void _toggleSwitch() {
-    setState(() {
-      isOn = !isOn;
-      if (isOn) {
-        widget.onTapOpened();
-      } else {
-        widget.onTapLocked();
-      }
-    });
+  @override
+  void initState() {
+    super.initState();
+    _messageHandler = MessageHandler(context);
   }
 
   @override
@@ -33,25 +37,29 @@ class _CustomSwitchButtonState extends State<CustomSwitchButton> {
         children: [
           GestureDetector(
             onVerticalDragEnd: (details) {
-              if (details.primaryVelocity! < 0) {
-                // Swiped up
-                setState(() {
-                  isOn = true;
-                  widget.onTapOpened();
-                });
-              } else if (details.primaryVelocity! > 0) {
-                // Swiped down
-                setState(() {
-                  isOn = false;
-                  widget.onTapLocked();
-                });
+              if (widget.isConnected) {
+                if (details.primaryVelocity! < 0) {
+                  // Swiped up
+                  setState(() {
+                    isOn = true;
+                    widget.onTapOpened();
+                  });
+                } else if (details.primaryVelocity! > 0) {
+                  // Swiped down
+                  setState(() {
+                    isOn = false;
+                    widget.onTapLocked();
+                  });
+                }
+              } else {
+                _messageHandler.showMessage('Not connected to Bluetooth');
               }
             },
             child: AnimatedContainer(
-              duration: Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 300),
               height: 240,
               width: 100,
-              margin: EdgeInsets.all(20),
+              margin: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(80),
                 gradient: LinearGradient(
@@ -71,7 +79,7 @@ class _CustomSwitchButtonState extends State<CustomSwitchButton> {
                   Positioned(
                     top: isOn ? 4 : 146,
                     child: AnimatedContainer(
-                      duration: Duration(milliseconds: 300),
+                      duration: const Duration(milliseconds: 300),
                       height: 70,
                       width: 70,
                       decoration: BoxDecoration(
@@ -87,7 +95,7 @@ class _CustomSwitchButtonState extends State<CustomSwitchButton> {
                   Positioned(
                     top: isOn ? 146 : 4,
                     child: AnimatedContainer(
-                      duration: Duration(milliseconds: 300),
+                      duration: const Duration(milliseconds: 300),
                       height: 70,
                       width: 70,
                       decoration: BoxDecoration(
@@ -97,7 +105,7 @@ class _CustomSwitchButtonState extends State<CustomSwitchButton> {
                             color: Colors.blue.withOpacity(0.2),
                             spreadRadius: 10,
                             blurRadius: 30,
-                            offset: Offset(0, 0),
+                            offset: const Offset(0, 0),
                           ),
                         ],
                       ),
@@ -145,7 +153,7 @@ class _CustomSwitchButtonState extends State<CustomSwitchButton> {
             ),
             child: Center(
               child: Text(
-                isOn ? 'Opend' : 'Locked',
+                isOn ? 'Opened' : 'Locked',
                 style: TextStyle(
                   color: isOn ? Colors.blue : Colors.red,
                   fontSize: 14,

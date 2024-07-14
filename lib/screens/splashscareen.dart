@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:animate_do/animate_do.dart';
-// import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter_application/screens/getstart.dart';
 
 class SplashScreenPage extends StatefulWidget {
+  const SplashScreenPage({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _SplashScreenPageState createState() => _SplashScreenPageState();
 }
 
@@ -19,7 +21,7 @@ class _SplashScreenPageState extends State<SplashScreenPage>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 6),
+      duration: const Duration(seconds: 6),
     );
     _animation = CurvedAnimation(
       parent: _controller,
@@ -40,7 +42,7 @@ class _SplashScreenPageState extends State<SplashScreenPage>
     return Timer(duration, () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) {
-          return Welcomepage();
+          return const Welcomepage();
         }),
       );
     });
@@ -61,18 +63,6 @@ class _SplashScreenPageState extends State<SplashScreenPage>
                   "assets/whitelogo.png",
                   width: 400.0,
                   height: 200.0,
-                ),
-              ),
-              SizedBox(height: 10),
-              FadeInUp(
-                duration: Duration(seconds: 2),
-                delay: Duration(seconds: 1),
-                child: Text(
-                  'The Ultimate Air Suspension Control',
-                  style: TextStyle(
-                    fontSize: 16.0,
-                    color: Colors.white70,
-                  ),
                 ),
               ),
             ],

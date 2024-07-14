@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application/auth/useridscreen.dart';
 import 'package:flutter_application/wedgets/cousetombutton.dart';
 
-import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class Welcomepage extends StatelessWidget {
+  const Welcomepage({super.key});
+
   @override
   Widget build(BuildContext context) {
     void navigateToNextStep() {

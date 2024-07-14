@@ -1,8 +1,10 @@
-import 'dart:convert';
+// ignore: file_names
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_application/wedgets/circlerprogress.dart';
+import 'package:flutter_application/wedgets/espcontroler.dart';
+import 'package:flutter_application/wedgets/messagehandler.dart';
 import 'package:flutter_application/wedgets/uppsi.dart';
 
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
@@ -25,14 +27,18 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
   bool _bluetoothState = false;
   double currentValue = 290;
   bool _isPressed = false;
-  bool _isConnecting = false;
   List<BluetoothDevice> _devices = [];
   BluetoothDevice? _deviceConnected;
   int front = 0;
   int rear = 0;
+  ESP32Controller? _esp32Controller;
+  late MessageHandler _messageHandler;
 
+  @override
   void initState() {
     super.initState();
+    _messageHandler = MessageHandler(context);
+    _esp32Controller = ESP32Controller(_connection, _messageHandler);
     _requestPermission();
 
     _initializeBluetoothState();
@@ -66,7 +72,7 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
 
   void _resetAndSendData() {
     if (_connection == null || !_connection!.isConnected) {
-      _showMessage('Not connected to any device', Colors.red);
+      _messageHandler.showMessage('Not connected to any device');
       setState(() {
         pressureAnimation =
             Tween<double>(begin: 0, end: 0).animate(progressController);
@@ -75,13 +81,9 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
       return;
     }
 
-    _sendData('E');
+    _esp32Controller?.sendCommand('E');
 
     progressController.forward();
-  }
-
-  void _sendData(String data) {
-    _connection?.output.add(ascii.encode(data));
   }
 
   Future<void> _initializeBluetoothState() async {
@@ -89,27 +91,6 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
     setState(() {
       _bluetoothState = state.isEnabled;
     });
-  }
-
-  void _showMessage(String message, [Color backgroundColor = Colors.red]) {
-    final snackBar = SnackBar(
-      content: Text(message),
-      backgroundColor: backgroundColor,
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: backgroundColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(20), // Adjust the border radius as needed
-        ),
-        margin: EdgeInsets.all(10), // Adjust the margin as needed
-        elevation: 6, // Adjust the elevation as needed
-      ),
-    );
   }
 
   void _showBluetoothDialog() async {
@@ -121,13 +102,14 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
     }
     _getDevices();
     showDialog(
+      // ignore: use_build_context_synchronously
       context: context,
       builder: (BuildContext context) {
         return Padding(
-          padding: EdgeInsets.symmetric(vertical: 100),
+          padding: const EdgeInsets.symmetric(vertical: 100),
           child: AlertDialog(
             backgroundColor: Colors.black87,
-            title: Text(
+            title: const Text(
               'Bluetooth Devices',
               style: TextStyle(color: Colors.white),
             ),
@@ -155,24 +137,20 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
   }
 
   Future<void> _getDevices() async {
-    setState(() {
-      _isConnecting = true;
-    });
+    setState(() {});
 
     try {
       var res = await _bluetooth.getBondedDevices();
       setState(() {
         _devices = res;
         if (_devices.isEmpty) {
-          _showMessage("No devices found");
+          _messageHandler.showMessage("No devices found");
         }
       });
     } catch (e) {
-      _showMessage("Error retrieving devices: $e");
+      _messageHandler.showMessage("Error retrieving devices: $e");
     } finally {
-      setState(() {
-        _isConnecting = false;
-      });
+      setState(() {});
     }
   }
 
@@ -181,14 +159,14 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
       tileColor: Colors.black12,
       title: Text(
         _deviceConnected?.name ?? "",
-        style: TextStyle(color: Colors.white),
+        style: const TextStyle(color: Colors.white),
       ),
       trailing: _connection?.isConnected ?? false
           ? TextButton(
               onPressed: () async {
                 await _connection?.finish();
                 setState(() => _deviceConnected = null);
-                _showMessage('Disconnected', Colors.orange);
+                _messageHandler.showMessage('Disconnected', Colors.orange);
               },
               child: const Text("Disconnect",
                   style: TextStyle(color: Colors.white)),
@@ -203,7 +181,7 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
 
   Widget _listDevices() {
     if (_devices.isEmpty) {
-      return Center(
+      return const Center(
         child: Text(
           'No devices found',
           style: TextStyle(color: Colors.white),
@@ -218,13 +196,13 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
               return ListTile(
                 title: Text(
                   device.name ?? device.address,
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                 ),
                 trailing: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: Colors.blue, // Text color
-                    padding: EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8), // Button padding
                     shape: RoundedRectangleBorder(
                       borderRadius:
@@ -232,7 +210,7 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
                     ),
                   ),
                   onPressed: () => _connectToDevice(device),
-                  child: Text('Connect'),
+                  child: const Text('Connect'),
                 ),
               );
             }).toList(),
@@ -243,9 +221,7 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
   }
 
   Future<void> _connectToDevice(BluetoothDevice device) async {
-    setState(() {
-      _isConnecting = true;
-    });
+    setState(() {});
 
     try {
       _connection = await BluetoothConnection.toAddress(device.address);
@@ -254,14 +230,12 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
         _devices = [];
       });
       _receiveData();
-      _showMessage(
+      _messageHandler.showMessage(
           'Connected to ${device.name ?? device.address}', Colors.green);
     } catch (e) {
-      _showMessage('Failed to connect', Colors.red);
+      _messageHandler.showMessage('Failed to connect', Colors.red);
     } finally {
-      setState(() {
-        _isConnecting = false;
-      });
+      setState(() {});
     }
   }
 
@@ -279,11 +253,12 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
       progressController.forward(from: 0);
     }).onDone(() {
       if (_connection?.isConnected ?? false) {
-        _showMessage('Disconnected from device', Colors.orange);
+        _messageHandler.showMessage('Disconnected from device', Colors.orange);
       }
     });
   }
 
+  @override
   void dispose() {
     _connection?.dispose();
     super.dispose();
@@ -296,8 +271,8 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Up(),
-            SizedBox(
+            const Up(),
+            const SizedBox(
               width: 20,
             ),
             CustomPaint(
@@ -321,7 +296,7 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
                     child: Container(
                       width: 70,
                       height: 70,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           colors: [Color(0xFF1D2124), Color(0xFF2E3138)],
                         ),
@@ -354,7 +329,7 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
                 ),
               ),
             ),
-            SizedBox(
+            const SizedBox(
               width: 50,
             ),
             GestureDetector(
@@ -365,20 +340,20 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
                 _showBluetoothDialog();
               },
               child: AnimatedContainer(
-                duration: Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 200),
                 alignment: Alignment.center,
                 width: _isPressed ? 50 : 40,
                 height: _isPressed ? 50 : 40,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [Color(0xFF1499EC), Color(0xFF036EBE)],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
                   boxShadow: _isPressed
                       ? [
-                          BoxShadow(
+                          const BoxShadow(
                             color: Colors.black26,
                             blurRadius: 10.0,
                             offset: Offset(0, 4),
@@ -386,7 +361,7 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
                         ]
                       : [],
                 ),
-                child: FaIcon(
+                child: const FaIcon(
                   FontAwesomeIcons.bluetoothB,
                   color: Colors.white,
                 ),
@@ -395,7 +370,7 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
           ],
         ),
         // SizedBox(height: 20),
-        Container(
+        SizedBox(
           width: double.infinity,
           child: SwitchListTile(
             value: _bluetoothState,
@@ -411,7 +386,7 @@ class _BuildpressureindicatorState extends State<Buildpressureindicator>
             tileColor: Colors.black26,
             title: Text(
               _bluetoothState ? "Bluetooth On" : "Bluetooth Off",
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),

@@ -1,3 +1,4 @@
+// ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:flutter_application/wedgets/custom_toggle_button.dart';
 import 'package:flutter_application/wedgets/espcontroler.dart';
@@ -62,7 +63,7 @@ class _BuildtogglebuttonState extends State<Buildtogglebutton> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Column(
+          const Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               SizedBox(
@@ -85,7 +86,7 @@ class _BuildtogglebuttonState extends State<Buildtogglebutton> {
               ],
             ),
           ),
-          Column(
+          const Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               CustomSensor(

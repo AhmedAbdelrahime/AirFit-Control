@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_application/wedgets/espcontroler.dart';
+import 'package:flutter_application/wedgets/messagehandler.dart';
 import 'package:flutter_application/wedgets/munalcontrol.center.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -26,23 +28,13 @@ class _BuildmanualcontrolbouttonState extends State<Buildmanualcontrolboutton> {
   bool isManualControlHighlightedUp = false;
   bool isManualControlHighlighteDown = false;
   double currentValue = 0;
-  final _bluetooth = FlutterBluetoothSerial.instance;
-  bool _bluetoothState = false;
+  // final _bluetooth = FlutterBluetoothSerial.instance;
+  // bool _bluetoothState = false;
   BluetoothConnection? _connection;
-  Future<void> _sendCommandToESP32(String command) async {
-    if (_connection != null && _connection!.isConnected) {
-      try {
-        _sendData(command);
-        _showMessage("Command sent: $command", Colors.green);
-      } catch (e) {
-        _showMessage("Failed to send command: $e", Colors.red);
-      }
-    } else {
-      _showMessage("Not connected to any device", Colors.red);
-    }
-  }
+  ESP32Controller? _esp32Controller;
+  late MessageHandler? _messageHandler;
 
-  void _receiveData() {
+  void receiveData() {
     _connection!.input!.listen((Uint8List data) {
       String receivedData = ascii.decode(data);
       List<String> sensorValues = receivedData.trim().split(',');
@@ -54,33 +46,15 @@ class _BuildmanualcontrolbouttonState extends State<Buildmanualcontrolboutton> {
         });
       }
     }).onDone(() {
-      _showMessage('Disconnected by remote request', Colors.orange);
+      _messageHandler?.showMessage('Disconnected by remote request');
     });
   }
 
-  void _sendData(String data) {
-    _connection?.output.add(ascii.encode(data));
-  }
-
-  void _showMessage(String message, [Color backgroundColor = Colors.red]) {
-    final snackBar = SnackBar(
-      content: Text(message),
-      backgroundColor: backgroundColor,
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: backgroundColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(20), // Adjust the border radius as needed
-        ),
-        margin: EdgeInsets.all(10), // Adjust the margin as needed
-        elevation: 6, // Adjust the elevation as needed
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _messageHandler = MessageHandler(context);
+    _esp32Controller = ESP32Controller(_connection, _messageHandler!);
   }
 
   @override
@@ -93,20 +67,22 @@ class _BuildmanualcontrolbouttonState extends State<Buildmanualcontrolboutton> {
           children: [
             GestureDetector(
               onTapDown: (_) {
-                _sendCommandToESP32('FRU');
+                _esp32Controller?.sendCommand('FRU');
+
                 setState(() {
                   isManualControlHighlightedUp = true;
                   frontText = '  Up   ';
                 });
               },
               onTapUp: (_) {
-                _sendCommandToESP32('S');
+                _esp32Controller?.sendCommand('S');
+
                 setState(() {
                   isManualControlHighlightedUp = false;
                 });
               },
               onTapCancel: () {
-                _sendCommandToESP32('S');
+                _esp32Controller?.sendCommand('S');
                 setState(() {
                   isManualControlHighlightedUp = false;
                 });
@@ -121,10 +97,10 @@ class _BuildmanualcontrolbouttonState extends State<Buildmanualcontrolboutton> {
                 isHighlighted: isManualControlHighlightedUp,
               ),
             ),
-            SizedBox(height: 50),
+            const SizedBox(height: 50),
             Text(
               frontText,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 20,
                 fontFamily: 'Roboto',
@@ -132,23 +108,24 @@ class _BuildmanualcontrolbouttonState extends State<Buildmanualcontrolboutton> {
                 height: 0,
               ),
             ),
-            SizedBox(height: 50),
+            const SizedBox(height: 50),
             GestureDetector(
               onTapDown: (_) {
-                _sendCommandToESP32('FRD');
+                _esp32Controller?.sendCommand('FRD');
+
                 setState(() {
                   isManualControlHighlighteDown = true;
                   frontText = 'Down';
                 });
               },
               onTapUp: (_) {
-                _sendCommandToESP32('S');
+                _esp32Controller?.sendCommand('S');
                 setState(() {
                   isManualControlHighlighteDown = false;
                 });
               },
               onTapCancel: () {
-                _sendCommandToESP32('S');
+                _esp32Controller?.sendCommand('S');
                 setState(() {
                   isManualControlHighlighteDown = false;
                 });
@@ -202,9 +179,9 @@ class _BuildmanualcontrolbouttonState extends State<Buildmanualcontrolboutton> {
               children: [
                 _buildIconButton(
                   FontAwesomeIcons.angleUp,
-                  () => _sendCommandToESP32(
-                      controlType == 'frontLeft' ? 'RU' : 'FU'),
-                  () => _sendCommandToESP32('S'),
+                  () => _esp32Controller
+                      ?.sendCommand(controlType == 'frontLeft' ? 'RU' : 'FU'),
+                  () => _esp32Controller?.sendCommand('S'),
                   controlType == 'frontLeft'
                       ? isFrontLeftUpPressed
                       : isFrontRightUpPressed,
@@ -220,13 +197,13 @@ class _BuildmanualcontrolbouttonState extends State<Buildmanualcontrolboutton> {
                 ),
                 Text(
                   value.toInt().toString(),
-                  style: TextStyle(color: Colors.white, fontSize: 24),
+                  style: const TextStyle(color: Colors.white, fontSize: 24),
                 ),
                 _buildIconButton(
                   FontAwesomeIcons.angleDown,
-                  () => _sendCommandToESP32(
-                      controlType == 'frontLeft' ? 'RD' : 'FD'),
-                  () => _sendCommandToESP32('S'),
+                  () => _esp32Controller
+                      ?.sendCommand(controlType == 'frontLeft' ? 'RD' : 'FD'),
+                  () => _esp32Controller?.sendCommand('S'),
                   controlType == 'frontLeft'
                       ? isFrontLeftDownPressed
                       : isFrontRightDownPressed,
@@ -264,7 +241,7 @@ class _BuildmanualcontrolbouttonState extends State<Buildmanualcontrolboutton> {
         onPressedState(false);
       },
       child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 200),
         width: 60,
         height: 60,
         decoration: BoxDecoration(

@@ -10,8 +10,8 @@ class Buildhandle extends StatefulWidget {
 class _BuildhandleState extends State<Buildhandle> {
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 140.0),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 140.0),
       child: Divider(
         color: Colors.black,
         thickness: 4.0,

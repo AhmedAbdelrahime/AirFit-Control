@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/wedgets/messagehandler.dart';
 
 class StartStopButton extends StatefulWidget {
   final VoidCallback onStartTap;
   final VoidCallback onStopTap;
+  final bool isConnected;
 
   const StartStopButton({
     Key? key,
     required this.onStartTap,
     required this.onStopTap,
+    required this.isConnected,
   }) : super(key: key);
 
   @override
@@ -17,19 +20,29 @@ class StartStopButton extends StatefulWidget {
 class _StartStopButtonState extends State<StartStopButton>
     with SingleTickerProviderStateMixin {
   bool isStart = true;
+  late MessageHandler _messageHandler;
+  @override
+  void initState() {
+    super.initState();
+    _messageHandler = MessageHandler(context);
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        setState(() {
-          isStart = !isStart;
-          if (isStart) {
-            widget.onStartTap();
-          } else {
-            widget.onStopTap();
-          }
-        });
+        if (widget.isConnected) {
+          setState(() {
+            isStart = !isStart;
+            if (isStart) {
+              widget.onStartTap();
+            } else {
+              widget.onStopTap();
+            }
+          });
+        } else {
+          _messageHandler.showMessage('Not connected to Bluetooth');
+        }
       },
       child: Stack(
         alignment: Alignment.center,

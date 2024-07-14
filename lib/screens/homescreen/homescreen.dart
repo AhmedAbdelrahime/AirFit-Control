@@ -1,11 +1,9 @@
-import 'dart:typed_data';
 import 'package:flutter_application/screens/homescreen/buildDraggableSheet.dart';
 import 'package:flutter_application/screens/homescreen/buildPressureIndicator.dart';
 import 'package:flutter_application/screens/homescreen/buildToggleButton.dart';
 import 'package:flutter_application/screens/homescreen/drawer.dart';
 import 'package:flutter_application/wedgets/espcontroler.dart';
 import 'package:flutter_application/wedgets/messagehandler.dart';
-import 'package:flutter_application/wedgets/snakbar.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,9 +20,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late String _userId = '';
-  late String _userName = '';
-  late String _userEmail = '';
-  bool _isLoading = true;
 
   final _bluetooth = FlutterBluetoothSerial.instance;
   bool _bluetoothState = false;
@@ -32,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen>
   BluetoothDevice? _deviceConnected;
   BluetoothConnection? _connection;
   ESP32Controller? _esp32Controller;
-  MessageHandler? _messageHandler;
+  late MessageHandler? _messageHandler;
 
   @override
   void initState() {
@@ -61,42 +56,16 @@ class _HomeScreenState extends State<HomeScreen>
           .get();
       if (userDoc.exists) {
         Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-        setState(() {
-          _userName = userData['name'];
-          _userEmail = userData['email'];
-          _isLoading = false;
-        });
+        setState(() {});
       } else {
         // Handle the case where the user ID does not exist
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('User ID not found.'),
-          backgroundColor: Colors.red,
-          margin: EdgeInsets.all(10), // Adjust the margin as needed
-          elevation: 6, //
-          shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(20), // Adjust the border radius as needed
-          ),
-        ));
+        setState(() {});
+        _messageHandler?.showMessage('User ID not found.');
       }
     } else {
       // Handle the case where the user ID is not found in SharedPreferences
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('User ID not found in preferences.'),
-        backgroundColor: Colors.red,
-        margin: EdgeInsets.all(10), // Adjust the margin as needed
-        elevation: 6, //
-        shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(20), // Adjust the border radius as needed
-        ),
-      ));
+      setState(() {});
+      _messageHandler?.showMessage('User ID not found in preferences.');
     }
   }
 
@@ -131,11 +100,7 @@ class _HomeScreenState extends State<HomeScreen>
       _esp32Controller = ESP32Controller(_connection, _messageHandler!);
       _esp32Controller?.sendCommand(_userId);
     } catch (e) {
-      print('Error connecting to device: $e');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Failed to connect to device.'),
-        backgroundColor: Colors.red,
-      ));
+      _messageHandler?.showMessage('Failed to connect to device.');
     }
   }
 
@@ -183,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen>
                   height: 34,
                   child: Stack(
                     children: [
-                      const Positioned(
+                      Positioned(
                         left: 0,
                         top: 0,
                         child: Text.rich(
